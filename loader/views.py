@@ -1,3 +1,6 @@
+import logging
+from json import JSONDecodeError
+
 from flask import Blueprint, render_template, request
 
 from functions import add_post
@@ -20,8 +23,19 @@ def upload_post():
     if not picture or not content:
         return 'Картина или текст не были отправлены'
 
-    path_to_picture = save_picture(picture)
-
+    if picture.filename.split('.')[-1] not in ['jpg', 'jpeg', 'png']:
+        logging.info('Загруженный файл не картинка')
+        return f"""
+        <h2>Не подходящее расширение<br></h2>
+        <h1><a href='/' class="link">Назад</a></h1>
+"""
+    try:
+        path_to_picture = save_picture(picture)
+    except FileNotFoundError:
+        logging.info('Файл не найден')
+        return 'Файл не найден'
+    except JSONDecodeError:
+        return 'Не валидный файл'
     post = {'pic': path_to_picture, 'content': content}
 
     add_post(post)
